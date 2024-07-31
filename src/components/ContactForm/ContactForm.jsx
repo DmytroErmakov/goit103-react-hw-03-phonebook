@@ -1,62 +1,67 @@
 import React from "react";
+import { useFormik } from "formik";
+import * as Yup from "yup";
+import { nanoid } from "nanoid";
 
-import PropTypes from 'prop-types';
-import styles from "./ContactForm.module.css";
+import css from "../ContactForm/ContactForm.module.css";
 
+export default function ContactForm({ onAdd }) {
+  const formik = useFormik({
+    initialValues: {
+      name: "",
+      number: "",
+    },
+    validationSchema: Yup.object({
+      name: Yup.string()
+        .min(3, "Name must be at least 3 characters long")
+        .max(50, "Name must be 50 characters or less")
+        .required("Name is required"),
+      number: Yup.string()
+        .matches(/^\d{3}-\d{2}-\d{2}$/, "Number must be in the format 459-12-56")
+        .required("Number is required"),
+      
+    }),
+    onSubmit: (value, { resetForm }) => {
+      onAdd({
+        id: nanoid(),
+        name: value.name,
+        number: value.number,
+      });
+      resetForm();
+    },
+  });
 
-export class ContactForm extends React.Component {
-  state = {
-    name: '',
-    number: '',
-  };
-
-  static propTypes = {
-    onSubmit: PropTypes.func.isRequired,
-  };
-
-  handlerChange = evt => {
-    // this.setState({ name: evt.currentTarget.value });
-    const { name, value } = evt.currentTarget;
-
-    this.setState({ [name]: value });
-  };
-
-  handlerSubmit = evt => {
-    evt.preventDefault();
-
-    this.props.onSubmit(this.state);
-
-    this.reset();
-  };
-
-  reset = () => {
-    this.setState({ name: '', number: '' });
-  };
-
-  render() {
-    return (
-      <form onSubmit={this.handlerSubmit} className={styles.form}>
+  return (
+    <form className={css.form} onSubmit={formik.handleSubmit}>
+      <label>
+        Name:
         <input
+          className={css.field}
           type="text"
           name="name"
-          value={this.state.name}
-          onChange={this.handlerChange}
-          pattern="^[a-zA-Zа-яА-Я]+(([' -][a-zA-Zа-яА-Я ])?[a-zA-Zа-яА-Я]*)*$"
-          title="Name may contain only letters, apostrophe, dash and spaces. For example Adrian, Jacob Mercer, Charles de Batz de Castelmore d'Artagnan"
-          required
+          value={formik.values.name}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
         />
+        {formik.touched.name && formik.errors.name ? (
+          <div className={css.error}>{formik.errors.name}</div>
+        ) : null}
+      </label>
+      <label>
+        Number:
         <input
-          type="tel"
+          className={css.field}
+          type="text"
           name="number"
-          value={this.state.number}
-          onChange={this.handlerChange}
-          pattern="\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}"
-          title="Phone number must be digits and can contain spaces, dashes, parentheses and can start with +"
-          required
+          value={formik.values.number}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
         />
-        <button type="submit">Add contact</button>
-      </form>
-    );
-  }
+        {formik.touched.number && formik.errors.number ? (
+          <div className={css.error}>{formik.errors.number}</div>
+        ) : null}
+      </label>
+      <button type="submit">Add Contact</button>
+    </form>
+  );
 }
-
